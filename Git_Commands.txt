@@ -1,0 +1,63 @@
+IMPORTANT!!!
+########################################################
+Luôn luôn phải pull changes from repository về local repository trước khi làm việc với github:
+# Get all changes from a specific branch: git pull origin main
+
+########################################################
+Working with github:
+1. Create a local folder in PC
+2. Right click at folder -> Choose "Git bash here"
+3. Configure login git account: Git global setup
+git config --global user.name "Ngoc Dang"
+git config --global user.email "dangcatngoc@gmail.com"
+
+4. From github online, create a new repository "newrepo" -> Copy https clone address
+5. Come back to the pc local folder which has been using "Git Bash here", performing clone: git clone https://github.com/dangcatngoc/newrepo.git
+cd newrepo
+git add .
+git add test.doc
+git commit -m "commit new files to new repo"
+git push origin main
+
+########################################################
+Create new branch and clone to a specific branch: For example: develop
+# Clone new repo to a new branch: git clone https://github.com/dangcatngoc/newrepo.git -b develop
+# Switch to a specific branch: git checkout -b main hoặc có thể dùng lệnh git switch main
+
+########################################################
+Kiểm tra nhánh đang làm việc và lịch sử log:
+# Kiểm tra lịch sử commit: git log --oneline
+# Kiểm tra có bao nhiêu nhánh: git branch
+# Tạo nhành mới: git branch alpha
+# Xóa nhánh: git branch -d alpha
+# Liệt kê điểm rẽ nhánh gộp nhánh: git log --oneline --graph
+# Đi vào một commit trước đó bằng command: git checkout 6d240cd (trong đó 6d240cd là id commit của alpha khi dùng lệnh --graph để show ra)- video phút thứ 21:24
+
+Note: Xem thêm video, khi merge nhánh với master thì phải swicth về nhánh master trước rồi sử dụng lệnh "git merge alpha" để merge,
+nếu có sự conflict thay đổi nó sẽ cảnh báo mình chọn còn không thì merge thẳng luôn, khi đó 2 nhánh như nhau tại điểm commit.
+Merge xong ta nên xóa nhánh mới tạo đi để trành nhầm lẫn. Mục đích tạo nhánh mới là để làm việc trên nhánh riêng tránh sự impact nhánh còn lại.
+
+
+########################################################
+Copy local repository and configure chỉ lấy cái update mới nhất tránh trường hợp phải clone tất cả về lâu:
+1. Paste local folder của repository vào pc
+2. Right click chọn "Git bash here"
+git init 
+git remote add origin https://gitlab.com/dcngoc/test.git
+
+# Continue thực hiện thay đổi commit update ngược lại lên remote repository nếu muốn:
+git add .
+git commit -m "abc"
+git push -u origin main
+
+########################################################
+Kết nối Git-VisualStudioCode
+1. From VisualStudioCode -> import local folder
+2. Vào menu của VisualStudioCode -> click "Terminal"-> "New Terminal"
+3. Thực hiện lệnh kết nối sau:
+git init 
+git remote add origin https://gitlab.com/dcngoc/test.git
+
+DONE.
+.
+

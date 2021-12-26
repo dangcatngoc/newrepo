@@ -1,0 +1,139 @@
+Kiểm tra thư mục cấu hình bonding:
+ls -l /proc/net/bonding
+
+########################################################
+Kiểm tra lại cấu hình bonding:
+cat /proc/net/bonding/bond0
+
+Example:
+### [root@sb119-u0 ~]# cat /proc/net/bonding/bond0
+Ethernet Channel Bonding Driver: v3.7.1 (April 27, 2011)
+
+Bonding Mode: fault-tolerance (active-backup) (fail_over_mac active)
+Primary Slave: None
+Currently Active Slave: eth2
+MII Status: up
+MII Polling Interval (ms): 100
+Up Delay (ms): 0
+Down Delay (ms): 0
+
+Slave Interface: eth2
+MII Status: up
+Speed: 1000 Mbps
+Duplex: full
+Link Failure Count: 0
+Permanent HW addr: 00:1e:67:77:44:7e
+Slave queue ID: 0
+
+Slave Interface: eth3
+MII Status: up
+Speed: 1000 Mbps
+Duplex: full
+Link Failure Count: 0
+Permanent HW addr: 00:1e:67:77:44:7f
+Slave queue ID: 0
+
+########################################################
+Show VLANs:
+
+[root@sb119-u0 ~]#  sudo bridge -c vlan show
+port		vlan ids
+bond0	 	1 			PVID Egress Untagged
+
+bond0
+br0	 		1 			PVID Egress Untagged
+
+bond1	 	1 			PVID Egress Untagged
+
+bond1
+br1	 		1 			PVID Egress Untagged
+
+virbr0	 	1 			PVID Egress Untagged
+
+virbr0-nic	1 			PVID Egress Untagged
+
+########################################################
+Mode 802.3ad:
+
+Tạo bond interfaces tên là bond0 kết hợp hai interfaces eth0 và eth1:
+ifenslave bond0 eth1
+ifenslave bond0 eth2
+
+Tạo swith ảo br-bonding và gán bond0 interface vào switch đó:
+brctl addbr br-bonding
+brctl addif bridgename bond0
+
+Kiểm tra lại cấu hình:
+brctl show
+
+Kết quả sẽ tương tự như sau:
+bridge name     bridge id               STP enabled     interfaces
+br-bonding      8000.000c29676160       no              bond0
+virbr0          8000.5254004468fb       yes             virbr0-nic
+
+########################################################
+Cấu hình 2 VLAN subinterfaces trên card eth2 và up 2 interfaces này lên:
+
+vconfig add eth2 101
+vconfig add eth2 102
+ifconfig eth2.101 up
+ifconfig eth2.102 up
+
+Nếu tạo thành công kết quả trả về sẽ tương tự như sau:
+
+Added VLAN with VID == 101 to IF -:eth2:-
+Added VLAN with VID == 102 to IF -:eth2:-
+
+Hoặc cũng có thể kiểm tra 2 vlan đã tạo như sau:
+
+cat /proc/net/vlan/config
+
+Kết quả trả về sẽ tương tự như sau:
+
+VLAN Dev name	 | VLAN ID
+Name-Type: VLAN_NAME_TYPE_RAW_PLUS_VID_NO_PAD
+eth2.101       | 101  | eth2
+eth2.102       | 102  | eth2
+
+########################################################
+Tạo hai switch ảo và gán 2 VLAN subinterfaces trên vào hai switch tương ứng này:
+
+brctl addbr br-vl101
+brctl addbr br-vl102
+brctl addif br-vl101 eth2.101
+brctl addif br-vl102 eth2.102
+
+Kiểm tra việc gán interfaces đã thành công chưa sử dụng lệnh:
+
+brctl show
+
+Kết quả trả về thành công sẽ tương tự như sau:
+
+bridge name	bridge id		STP enabled	interfaces
+br-vl101	8000.000c29586f38	yes		    eth2.101
+br-vl102	8000.000c29586f38	yes		    eth2.102
+br0		 8000.000c29586f24	yes		    eth0
+lxcbr0	  8000.000000000000	no
+
+
+########################################################
+Lưu giữ lại cấu hình này để tránh bị mất khi khởi động lại bằng cách chỉnh sửa trong file /etc/network/interfaces:
+# config vlan 101
+auto eth2.101
+iface eth2.101 inet manual
+vlan-raw-device eth2
+auto br-vl101
+iface br-vl101 inet static
+address 10.0.2.141/24
+bridge_ports eth2.101
+bridge_stp on
+bridge_fd 9
+bridge_maxwait 0
+up /sbin/ifconfig $IFACE up || /bin/true
+
+########################################################
+Khởi động lại các interfaces để áp dụng thay đổi:
+ifdown -a && ifup -a
+
+########################################################
+
